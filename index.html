@@ -49,6 +49,11 @@
   .toolbar { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; align-items: center; }
   .toolbar input { flex: 1; min-width: 140px; margin: 0; font-family: "Merriweather", serif; }
   .toolbar select { width: auto; margin: 0; background: #fff3b0; }
+  .claims li { list-style: none; border-left: 4px solid #ff006e; background: #fff0f6; padding: 4px 6px; margin: 4px 0; font-size: 10px; }
+  .claims ol { padding: 0; margin: 0; }
+  .timer { font-weight: 600; color: #8338ec; }
+  .timer.low { color: #e71d36; }
+  .cancel { background: #ff9f1c; border: 1px dashed #000; font-size: 9px; padding: 1px 6px; cursor: pointer; font-family: "Pacifico", cursive; float: right; }
   footer { text-align: center; padding: 14px; font-size: 10px; color: #888; font-family: "Merriweather", serif; }
 </style>
 </head>
@@ -109,6 +114,10 @@
   </main>
 
   <aside>
+    <div class="panel claims" id="mine" style="margin-bottom:12px;box-shadow:3px 3px 0 #ff006e">
+      <h3>🛍️ My Claims <span id="claimCount" style="font-size:11px;color:#8338ec"></span></h3>
+      <div id="claims"><p style="font-size:10px;color:#999">nothing claimed yet! go grab some food 🍕</p></div>
+    </div>
     <div class="panel lb" id="lb">
       <h3>🏆 Leaderboard</h3>
       <table id="lbTable"></table>
@@ -199,10 +208,35 @@
     leaderboard[l.by] = (leaderboard[l.by] || 0) + 1;
     const m = document.getElementById('statMeals');
     m.textContent = (parseInt(m.textContent.replace(/,/g, ''), 10) + 1).toLocaleString();
-    toast(`✅ Claimed 1 serving of ${l.name}! Pick up at ${l.room}.`);
-    render(); renderLB();
+    claims.push({ cid: nextClaim++, id: l.id, name: l.name, room: l.room, building: l.building, until: Date.now() + 20 * 60 * 1000 });
+    toast(`✅ Claimed 1 serving of ${l.name}! Pick up at ${l.room} within 20 min.`);
+    render(); renderLB(); renderClaims();
   }
 
+  let claims = [], nextClaim = 1;
+  function fmtLeft(ms) { const s = Math.max(0, Math.round(ms / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; }
+  function renderClaims() {
+    claims = claims.filter(c => c.until > Date.now());
+    document.getElementById('claimCount').textContent = claims.length ? `(${claims.length})` : '';
+    document.getElementById('claims').innerHTML = claims.length
+      ? '<ol>' + claims.map(c => {
+          const left = c.until - Date.now();
+          return `<li><button class="cancel" onclick="cancelClaim(${c.cid})">cancel</button><b>${esc(c.name)}</b><br>📍 ${c.building} · ${esc(c.room)}<br>pick up in <span class="timer ${left < 5 * 60 * 1000 ? 'low' : ''}">${fmtLeft(left)}</span></li>`;
+        }).join('') + '</ol>'
+      : '<p style="font-size:10px;color:#999">nothing claimed yet! go grab some food 🍕</p>';
+  }
+  function cancelClaim(cid) {
+    const c = claims.find(x => x.cid === cid);
+    if (!c) return;
+    claims = claims.filter(x => x.cid !== cid);
+    const l = listings.find(x => x.id === c.id);
+    if (l) { l.qty++; leaderboard[l.by] = Math.max(0, (leaderboard[l.by] || 1) - 1); }
+    const m = document.getElementById('statMeals');
+    m.textContent = (parseInt(m.textContent.replace(/,/g, ''), 10) - 1).toLocaleString();
+    toast('↩️ Claim cancelled, serving returned.');
+    render(); renderLB(); renderClaims();
+  }
+  setInterval(renderClaims, 1000);
   document.getElementById('q').addEventListener('input', render);
   document.getElementById('sort').addEventListener('change', render);
 
