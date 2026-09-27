@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PlateShare 🍕 — Share Leftover Food on Campus!</title>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Merriweather:wght@400;700&family=Roboto+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Roboto Mono", monospace; font-size: 12px; background: #fdf6ec; color: #333; }
+  header { background: linear-gradient(90deg, #ff6b35, #f7c59f, #2ec4b6); padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+  .logo { font-family: "Pacifico", cursive; font-size: 30px; color: #fff; text-shadow: 2px 2px 0 #e71d36; }
+  nav a { font-family: "Merriweather", serif; color: #011627; margin-left: 12px; font-size: 11px; text-decoration: none; border-bottom: 2px solid #e71d36; }
+  .stats { display: flex; gap: 6px; padding: 8px 20px; background: #011627; color: #fff; flex-wrap: wrap; }
+  .stat { padding: 4px 10px; border-radius: 4px; font-size: 11px; }
+  .s1 { background: #e71d36; } .s2 { background: #2ec4b6; } .s3 { background: #ff9f1c; color: #000; } .s4 { background: #8338ec; }
+  .announce { background: #ffbe0b; color: #6a040f; padding: 6px 20px; font-size: 11px; font-family: "Merriweather", serif; border-bottom: 3px dotted #fb5607; }
+  .wrap { display: grid; grid-template-columns: 210px 1fr 230px; gap: 12px; padding: 12px; }
+  @media (max-width: 900px) { .wrap { grid-template-columns: 1fr; } }
+  .panel { background: #fff; border: 1px solid #ddd; padding: 10px; border-radius: 3px; box-shadow: 3px 3px 0 #2ec4b6; }
+  .panel h3 { font-family: "Merriweather", serif; font-size: 14px; margin: 0 0 8px; color: #e71d36; }
+  .panel h4 { font-family: "Pacifico", cursive; font-size: 16px; margin: 10px 0 4px; color: #8338ec; font-weight: normal; }
+  label { display: block; font-size: 11px; margin: 3px 0; }
+  select, input[type=text], input[type=number] { width: 100%; font-family: inherit; font-size: 11px; padding: 3px; margin: 2px 0 6px; border: 1px solid #aaa; }
+  .filter-btn { background: #8338ec; color: #fff; border: none; padding: 6px 12px; font-size: 11px; border-radius: 0; font-family: "Merriweather", serif; cursor: pointer; width: 100%; margin-top: 4px; }
+  .reset-link { font-size: 10px; color: #fb5607; cursor: pointer; text-decoration: underline; display: inline-block; margin-top: 6px; }
+  .listings { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }
+  .card { background: #fff; border: 2px solid #ff9f1c; padding: 8px; position: relative; }
+  .card:nth-child(3n) { border-color: #2ec4b6; }
+  .card:nth-child(3n+1) { border-color: #e71d36; }
+  .card .emoji { font-size: 34px; float: right; }
+  .card h5 { font-family: "Merriweather", serif; font-size: 13px; margin: 0 0 4px; }
+  .card .meta { font-size: 10px; color: #777; line-height: 1.5; }
+  .tag { display: inline-block; font-size: 9px; padding: 1px 5px; margin: 2px 2px 0 0; border-radius: 8px; color: #fff; }
+  .t-veg { background: #38b000; } .t-vegan { background: #007200; } .t-gf { background: #fb5607; } .t-halal { background: #3a86ff; } .t-dairy { background: #ff006e; }
+  .qty { font-weight: 600; color: #e71d36; font-size: 11px; }
+  .actions { margin-top: 8px; display: flex; gap: 5px; align-items: center; }
+  .claim-btn { background: #38b000; color: #fff; border: 2px solid #2d6a4f; padding: 5px 10px; font-size: 11px; font-family: "Roboto Mono", monospace; cursor: pointer; border-radius: 3px; }
+  .claim-btn:disabled { background: #bbb; border-color: #999; cursor: not-allowed; }
+  .req-btn { background: #3a86ff; color: #fff; border: none; padding: 4px 14px; font-size: 10px; font-family: "Merriweather", serif; border-radius: 20px; cursor: pointer; }
+  .fav { cursor: pointer; font-size: 14px; margin-left: auto; }
+  .lb table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .lb td { padding: 3px 2px; border-bottom: 1px dashed #ccc; }
+  .lb tr:first-child td { color: #ff9f1c; font-weight: 600; }
+  .post-btn { background: #ff006e; color: #fff; border: 3px double #fff; padding: 8px 10px; font-family: "Pacifico", cursive; font-size: 15px; cursor: pointer; width: 100%; margin-top: 4px; }
+  .toast { position: fixed; bottom: 16px; right: 16px; background: #011627; color: #2ec4b6; padding: 10px 14px; font-size: 11px; border-left: 5px solid #ff006e; display: none; }
+  .empty { padding: 30px; text-align: center; color: #999; font-family: "Merriweather", serif; }
+  .count { font-size: 10px; color: #8338ec; margin-bottom: 6px; }
+  footer { text-align: center; padding: 14px; font-size: 10px; color: #888; font-family: "Merriweather", serif; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">PlateShare 🍕</div>
+  <nav>
+    <a href="#">Browse</a><a href="#post">Post Food</a><a href="#lb">Leaderboard</a><a href="#" onclick="toast('About page coming soon!');return false;">About</a>
+  </nav>
+</header>
+<div class="stats">
+  <span class="stat s1">🍽️ <b id="statMeals">1,284</b> meals saved</span>
+  <span class="stat s2">🌱 <b id="statCO2">612</b> kg CO₂ avoided</span>
+  <span class="stat s3">👥 <b>387</b> sharers</span>
+  <span class="stat s4">📍 <b id="statLive">0</b> live listings</span>
+</div>
+<div class="announce">📣 NEW: Dining Hall C now posts leftovers every weekday at 8:30pm! Also check out our Instagram @plateshare_campus!! Also rate us on the hackathon form!!</div>
+
+<div class="wrap">
+  <aside class="panel">
+    <h3>🔍 Filters</h3>
+    <label>Building</label>
+    <select id="fBuilding">
+      <option value="">Any building</option>
+      <option>Student Union</option><option>Engineering</option><option>Dining Hall C</option><option>Library</option><option>Dorm Row</option>
+    </select>
+    <label>Dietary</label>
+    <label><input type="checkbox" class="fDiet" value="veg"> Vegetarian</label>
+    <label><input type="checkbox" class="fDiet" value="vegan"> Vegan</label>
+    <label><input type="checkbox" class="fDiet" value="gf"> Gluten-free</label>
+    <label><input type="checkbox" class="fDiet" value="halal"> Halal</label>
+    <label>Pickup within (min)</label>
+    <input type="number" id="fTime" value="120" min="5" step="5">
+    <label><input type="checkbox" id="fAvail" checked> Hide claimed</label>
+    <button class="filter-btn" onclick="render()">Apply Filters</button>
+    <span class="reset-link" onclick="resetFilters()">reset all</span>
+
+    <h4>Tips!</h4>
+    <p style="font-size:10px;line-height:1.5">Bring your own container ♻️. Claims expire after 20 min. Be nice to the dining staff! Report issues to the team. Don't claim more than you can eat.</p>
+  </aside>
+
+  <main>
+    <div class="panel">
+      <h3>🍱 Available Now</h3>
+      <div class="count" id="count"></div>
+      <div class="listings" id="listings"></div>
+    </div>
+  </main>
+
+  <aside>
+    <div class="panel lb" id="lb">
+      <h3>🏆 Leaderboard</h3>
+      <table id="lbTable"></table>
+    </div>
+    <div class="panel" id="post" style="margin-top:12px">
+      <h3>➕ Post Leftovers</h3>
+      <label>What is it?</label><input type="text" id="pName" placeholder="e.g. Half a sheet cake">
+      <label>Building</label>
+      <select id="pBuilding"><option>Student Union</option><option>Engineering</option><option>Dining Hall C</option><option>Library</option><option>Dorm Row</option></select>
+      <label>Servings</label><input type="number" id="pQty" value="4" min="1">
+      <label><input type="checkbox" class="pDiet" value="veg"> Veg</label>
+      <label><input type="checkbox" class="pDiet" value="vegan"> Vegan</label>
+      <label><input type="checkbox" class="pDiet" value="gf"> GF</label>
+      <button class="post-btn" onclick="postFood()">Post it!</button>
+    </div>
+  </aside>
+</div>
+
+<footer>PlateShare © 2026 · built at HackCampus · v0.9.3-beta · <a href="#" onclick="toast('Contact form coming soon');return false;">contact</a></footer>
+<div class="toast" id="toast"></div>
+
+<script>
+  const EMOJI = { pizza: '🍕', sandwich: '🥪', curry: '🍛', salad: '🥗', bagel: '🥯', cake: '🎂', taco: '🌮', sushi: '🍣', default: '🍱' };
+  let listings = [
+    { id: 1, name: 'Pepperoni + Cheese Pizza', emoji: '🍕', building: 'Engineering', room: 'EB 210', qty: 12, mins: 15, diet: [], by: 'ACM Club' },
+    { id: 2, name: 'Veggie Wraps', emoji: '🥪', building: 'Student Union', room: 'Room 3B', qty: 8, mins: 30, diet: ['veg'], by: 'Student Gov' },
+    { id: 3, name: 'Chana Masala + Rice', emoji: '🍛', building: 'Dining Hall C', room: 'Back counter', qty: 20, mins: 45, diet: ['veg', 'vegan', 'gf', 'halal'], by: 'Dining Hall C' },
+    { id: 4, name: 'Caesar Salad Trays', emoji: '🥗', building: 'Library', room: '4th floor lounge', qty: 5, mins: 10, diet: ['veg', 'gf'], by: 'Grad Council' },
+    { id: 5, name: 'Assorted Bagels', emoji: '🥯', building: 'Dorm Row', room: 'Hall 2 lobby', qty: 15, mins: 90, diet: ['veg', 'vegan'], by: 'RA Team' },
+    { id: 6, name: 'Chicken Tacos', emoji: '🌮', building: 'Student Union', room: 'Ballroom', qty: 3, mins: 25, diet: ['gf', 'halal'], by: 'Latinx SA' },
+    { id: 7, name: 'Birthday Cake (half)', emoji: '🎂', building: 'Engineering', room: 'Makerspace', qty: 10, mins: 60, diet: ['veg'], by: 'Robotics Club' },
+    { id: 8, name: 'Sushi Platter', emoji: '🍣', building: 'Library', room: 'Room 120', qty: 6, mins: 20, diet: ['gf'], by: 'Japanese SA' }
+  ];
+  let leaderboard = { 'Dining Hall C': 312, 'ACM Club': 188, 'Student Gov': 141, 'RA Team': 97, 'Robotics Club': 64 };
+  let nextId = 100;
+  const DIET_LABEL = { veg: 'VEG', vegan: 'VEGAN', gf: 'GF', halal: 'HALAL', dairy: 'DAIRY' };
+
+  function toast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.style.display = 'block';
+    clearTimeout(t._h); t._h = setTimeout(() => t.style.display = 'none', 2400);
+  }
+
+  function render() {
+    const b = document.getElementById('fBuilding').value;
+    const diets = [...document.querySelectorAll('.fDiet:checked')].map(x => x.value);
+    const maxT = parseInt(document.getElementById('fTime').value || '999', 10);
+    const hide = document.getElementById('fAvail').checked;
+    const shown = listings.filter(l =>
+      (!b || l.building === b) &&
+      diets.every(d => l.diet.includes(d)) &&
+      l.mins <= maxT &&
+      (!hide || l.qty > 0));
+    document.getElementById('count').textContent = `showing ${shown.length} of ${listings.length} listings`;
+    document.getElementById('statLive').textContent = listings.filter(l => l.qty > 0).length;
+    const el = document.getElementById('listings');
+    if (!shown.length) { el.innerHTML = '<div class="empty">No food matches 😢 try other filters!</div>'; return; }
+    el.innerHTML = shown.map(l => `
+      <div class="card">
+        <span class="emoji">${l.emoji}</span>
+        <h5>${esc(l.name)}</h5>
+        <div class="meta">📍 ${l.building} · ${esc(l.room)}<br>⏰ pickup in ${l.mins} min<br>👤 posted by ${esc(l.by)}</div>
+        <div>${l.diet.map(d => `<span class="tag t-${d}">${DIET_LABEL[d]}</span>`).join('')}</div>
+        <div class="qty">${l.qty > 0 ? l.qty + ' servings left' : 'ALL CLAIMED'}</div>
+        <div class="actions">
+          <button class="claim-btn" onclick="claim(${l.id})" ${l.qty ? '' : 'disabled'}>Claim</button>
+          <button class="req-btn" onclick="toast('Request sent to ${esc(l.by)}!')">Request</button>
+          <span class="fav" onclick="this.textContent = this.textContent === '♡' ? '❤️' : '♡'">♡</span>
+        </div>
+      </div>`).join('');
+  }
+
+  function renderLB() {
+    const rows = Object.entries(leaderboard).sort((a, b) => b[1] - a[1]).slice(0, 6);
+    document.getElementById('lbTable').innerHTML = rows.map(([n, v], i) =>
+      `<tr><td>${['🥇', '🥈', '🥉'][i] || '#' + (i + 1)}</td><td>${esc(n)}</td><td style="text-align:right">${v}</td></tr>`).join('');
+  }
+
+  function claim(id) {
+    const l = listings.find(x => x.id === id);
+    if (!l || !l.qty) return;
+    l.qty--;
+    leaderboard[l.by] = (leaderboard[l.by] || 0) + 1;
+    const m = document.getElementById('statMeals');
+    m.textContent = (parseInt(m.textContent.replace(/,/g, ''), 10) + 1).toLocaleString();
+    toast(`✅ Claimed 1 serving of ${l.name}! Pick up at ${l.room}.`);
+    render(); renderLB();
+  }
+
+  function postFood() {
+    const name = document.getElementById('pName').value.trim();
+    if (!name) { toast('⚠️ please enter what the food is'); return; }
+    const key = Object.keys(EMOJI).find(k => name.toLowerCase().includes(k)) || 'default';
+    listings.unshift({
+      id: nextId++, name, emoji: EMOJI[key],
+      building: document.getElementById('pBuilding').value, room: 'See poster',
+      qty: Math.max(1, parseInt(document.getElementById('pQty').value, 10) || 1),
+      mins: 5, diet: [...document.querySelectorAll('.pDiet:checked')].map(x => x.value), by: 'You'
+    });
+    document.getElementById('pName').value = '';
+    toast('🎉 Posted! Thanks for sharing!');
+    render();
+  }
+
+  function resetFilters() {
+    document.getElementById('fBuilding').value = '';
+    document.querySelectorAll('.fDiet').forEach(c => c.checked = false);
+    document.getElementById('fTime').value = 120;
+    document.getElementById('fAvail').checked = true;
+    render();
+  }
+
+  function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+  render(); renderLB();
+</script>
+</body>
+</html>
