@@ -46,6 +46,9 @@
   .toast { position: fixed; bottom: 16px; right: 16px; background: #011627; color: #2ec4b6; padding: 10px 14px; font-size: 11px; border-left: 5px solid #ff006e; display: none; }
   .empty { padding: 30px; text-align: center; color: #999; font-family: "Merriweather", serif; }
   .count { font-size: 10px; color: #8338ec; margin-bottom: 6px; }
+  .toolbar { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; align-items: center; }
+  .toolbar input { flex: 1; min-width: 140px; margin: 0; font-family: "Merriweather", serif; }
+  .toolbar select { width: auto; margin: 0; background: #fff3b0; }
   footer { text-align: center; padding: 14px; font-size: 10px; color: #888; font-family: "Merriweather", serif; }
 </style>
 </head>
@@ -91,6 +94,15 @@
   <main>
     <div class="panel">
       <h3>🍱 Available Now</h3>
+      <div class="toolbar">
+        <input type="text" id="q" placeholder="🔎 search food, club, room...">
+        <select id="sort">
+          <option value="soon">⏰ Pickup soonest</option>
+          <option value="most">📦 Most servings</option>
+          <option value="new">🆕 Newest</option>
+          <option value="az">🔤 A-Z</option>
+        </select>
+      </div>
       <div class="count" id="count"></div>
       <div class="listings" id="listings"></div>
     </div>
@@ -145,11 +157,16 @@
     const diets = [...document.querySelectorAll('.fDiet:checked')].map(x => x.value);
     const maxT = parseInt(document.getElementById('fTime').value || '999', 10);
     const hide = document.getElementById('fAvail').checked;
+    const q = document.getElementById('q').value.trim().toLowerCase();
+    const sort = document.getElementById('sort').value;
     const shown = listings.filter(l =>
+      (!q || [l.name, l.building, l.room, l.by].join(' ').toLowerCase().includes(q)) &&
       (!b || l.building === b) &&
       diets.every(d => l.diet.includes(d)) &&
       l.mins <= maxT &&
       (!hide || l.qty > 0));
+    const sorters = { soon: (a, b) => a.mins - b.mins, most: (a, b) => b.qty - a.qty, new: (a, b) => b.id - a.id, az: (a, b) => a.name.localeCompare(b.name) };
+    shown.sort(sorters[sort]);
     document.getElementById('count').textContent = `showing ${shown.length} of ${listings.length} listings`;
     document.getElementById('statLive').textContent = listings.filter(l => l.qty > 0).length;
     const el = document.getElementById('listings');
@@ -185,6 +202,9 @@
     toast(`✅ Claimed 1 serving of ${l.name}! Pick up at ${l.room}.`);
     render(); renderLB();
   }
+
+  document.getElementById('q').addEventListener('input', render);
+  document.getElementById('sort').addEventListener('change', render);
 
   function postFood() {
     const name = document.getElementById('pName').value.trim();
